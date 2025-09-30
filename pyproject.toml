@@ -12,8 +12,11 @@ dependencies = [
     "pyright>=1.1.405",
     "pytest-testmon>=2.1.3",
     "pytest-xdist>=3.8.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.1",
     "ruff>=0.13.2",
     "torch>=2.8.0",
     "transformers>=4.56.2",
     "trl>=0.23.0",
+    "freezegun>=1.5.5",
 ]

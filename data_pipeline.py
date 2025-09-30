@@ -15,7 +15,15 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
 import requests
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
 API_VERSION = "2022-11-28"
+
+if load_dotenv is not None:
+    load_dotenv()
 DEFAULT_OUTPUT_DIR = Path("data")
 DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -421,9 +429,9 @@ def add_filter_parser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--input", required=True, help="Path to raw PR jsonl")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_DIR / "filtered_prs.jsonl"))
     parser.add_argument("--min-deletions", type=int, default=10)
-    parser.add_argument("--max-additions", type=int, default=40)
+    parser.add_argument("--max-additions", type=int, default=150)
     parser.add_argument("--max-files", type=int, default=30)
-    parser.add_argument("--min-deletion-ratio", type=float, default=0.3)
+    parser.add_argument("--min-deletion-ratio", type=float, default=0.1)
     parser.add_argument("--require-status-success", action="store_true")
     parser.add_argument("--only-python", action="store_true")
     parser.add_argument("--exclude-tests", action="store_true")
