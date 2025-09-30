@@ -50,34 +50,23 @@ Clobber trains coding agents to remove unused code, dependencies, and complexity
 ## Architecture
 
 ```mermaid
-graph LR
-    subgraph Data["Data Pipeline"]
-        A[GitHub PRs] --> B[Filter]
-        B --> C[Training Prompts]
-    end
+flowchart LR
+    A[GitHub PRs] --> B[Filter PRs]
+    B --> C[Training Dataset]
 
-    subgraph Training["Training Loop"]
-        D[GRPO Trainer] --> E[Generate K=6 Diffs]
-        E --> F[Verifier]
-        F --> G{Pass Gates?}
-        G -->|Yes| H[Score Metrics]
-        G -->|No| I[Reward = -1]
-        H --> J[Reward Signal]
-        I --> J
-        J -->|Update Policy| D
-    end
+    C --> D[GRPO Trainer]
+    D --> E[Generate Diffs]
+    E --> F[Verifier]
+    F --> G[Reward]
+    G --> D
 
-    subgraph Eval["Evaluation"]
-        K[Baselines] --> F
-        F --> L[Leaderboard]
-    end
+    C --> H[Baselines]
+    H --> F
+    F --> I[Leaderboard]
 
-    C --> D
-    C --> K
-
-    style F fill:#ffccff,stroke:#333,stroke-width:3px
-    style D fill:#ccddff,stroke:#333,stroke-width:3px
-    style L fill:#ccffcc,stroke:#333,stroke-width:3px
+    style F fill:#ffccff
+    style D fill:#ccddff
+    style I fill:#ccffcc
 ```
 
 ### Core Components
