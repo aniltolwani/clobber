@@ -2,21 +2,16 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
 import modal
 
-from grpo_trainer import main as grpo_main
+MOUNT_PATH = "/root/clobber"
 
-
-DEFAULT_MODEL_ID = os.environ.get("CLOBBER_GRPO_MODEL", "Qwen/Qwen2.5-Coder-7B-Instruct")
-DEFAULT_DATASET = os.environ.get("CLOBBER_GRPO_DATASET", "/vol/datasets/grpo_prompts.jsonl")
-DEFAULT_TIMEOUT = int(os.environ.get("CLOBBER_GRPO_TIMEOUT", str(60 * 60 * 4)))  # 4 hours
-
-
-app = modal.App("clobber-grpo-trainer")
-
+# Exclude large directories and files we don't need in the container
+# Note: add_local_dir must come LAST (or use copy=True)
 image = (
     modal.Image.debian_slim()
     .apt_install("git")
@@ -34,7 +29,34 @@ image = (
         "pytest-testmon",
         "pytest-xdist",
     )
+    .add_local_dir(
+        Path.cwd(),
+        remote_path=MOUNT_PATH,
+        ignore=[
+            "repos/**",          # Large cloned repos - verifier re-clones fresh
+            "checkpoints/**",    # Model weights - saved to volume instead
+            ".venv/**",          # Virtual environment
+            ".git/**",           # Git history
+            "__pycache__/**",    # Python cache
+            "*.pyc",             # Compiled Python
+            ".pytest_cache/**",  # Pytest cache
+            ".ruff_cache/**",    # Ruff cache
+            "data/*.jsonl",      # Large datasets - uploaded to volume separately
+        ],
+    )
 )
+
+app = modal.App("clobber-grpo-trainer")
+
+if MOUNT_PATH not in sys.path:
+    sys.path.append(MOUNT_PATH)
+
+from grpo_trainer import main as grpo_main
+
+
+DEFAULT_MODEL_ID = os.environ.get("CLOBBER_GRPO_MODEL", "Qwen/Qwen2.5-Coder-7B-Instruct")
+DEFAULT_DATASET = os.environ.get("CLOBBER_GRPO_DATASET", "/vol/datasets/grpo_prompts.jsonl")
+DEFAULT_TIMEOUT = int(os.environ.get("CLOBBER_GRPO_TIMEOUT", str(60 * 60 * 4)))  # 4 hours
 
 # Create or reference the shared volume
 volume = modal.Volume.from_name("clobber-data", create_if_missing=True)
@@ -42,7 +64,7 @@ volume = modal.Volume.from_name("clobber-data", create_if_missing=True)
 
 @app.function(
     image=image,
-    gpu="A10G",  # 24GB, ~$1/hr (A100 is $4/hr but has 40GB)
+    gpu="A100:2",  # two A100s (~80GB combined)
     timeout=DEFAULT_TIMEOUT,
     volumes={"/vol": volume},
 )

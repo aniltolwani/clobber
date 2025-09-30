@@ -209,4 +209,5 @@ __marimo__/
 # Clobber-specific
 repos/          # Local clones for training data generation
 checkpoints/    # Model checkpoints from training
+trainer_output/ # Training output from local runs
 data/*.jsonl    # Keep raw/filtered/prompt datasets (but commit grpo_prompts.jsonl)

@@ -24,7 +24,7 @@ def load_model(model_id: str = MODEL_ID_SMALL):
     )
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        torch_dtype="auto",
+        dtype="auto",
         device_map="auto",
         trust_remote_code=True,
     )
@@ -43,22 +43,49 @@ def build_config() -> GRPOConfig:
         learning_rate=5e-6,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
-        group_size=6,
-        kl_coef=0.02,
+        num_generations=6,
+        beta=0.02,
+        generation_batch_size=6,
         max_prompt_length=4096,
         max_completion_length=768,
         logging_steps=10,
     )
 
 
-def reward_function(batch: List[Dict[str, str]], completions: List[str], **_: Dict) -> List[float]:
+def reward_function(
+    prompts: List[str] | None = None,
+    completions: List[str] | None = None,
+    completion_ids: List | None = None,
+    trainer_state=None,
+    **kwargs,
+) -> List[float]:
+    """Reward function for GRPO trainer.
+
+    Must accept keyword arguments as specified by TRL's GRPOTrainer API.
+    Additional dataset columns (like repo_path, allow_refactor) are passed via **kwargs.
+    """
+    if completions is None:
+        raise ValueError("completions must be provided")
+
     rewards: List[float] = []
-    for sample, completion in zip(batch, completions):
-        repo_path = sample["repo_path"]
-        allow_refactor = sample.get("allow_refactor", False)
+
+    # Extract dataset columns from kwargs
+    repo_paths = kwargs.get("repo_path", [])
+    allow_refactors = kwargs.get("allow_refactor", [False] * len(completions))
+
+    for i, completion in enumerate(completions):
+        repo_path = repo_paths[i] if i < len(repo_paths) else None
+        allow_refactor = allow_refactors[i] if i < len(allow_refactors) else False
+
+        if repo_path is None:
+            # Skip if no repo_path provided
+            rewards.append(0.0)
+            continue
+
         diff_text = completion
         score, _ = score_patch(repo_path, diff_text, allow_refactor)
         rewards.append(score)
+
     return rewards
 
 
@@ -77,7 +104,7 @@ def main(
         processing_class=tokenizer,
         args=config,
         train_dataset=prompts,
-        reward_function=reward_function,
+        reward_funcs=[reward_function],  # Note: reward_funcs expects a list
     )
 
     trainer.train()

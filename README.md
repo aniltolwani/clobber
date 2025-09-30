@@ -383,6 +383,91 @@ python baseline_runner.py --dataset data/grpo_prompts.jsonl --baselines heuristi
 
 ---
 
+## 🎬 Demo Ideas
+
+Want to show off what Clobber can do? Here are four compelling demo formats:
+
+### Option A: Before/After Comparison (10-second loop)
+
+**Format:** Split-screen video showing:
+- **Left:** Original code with unused imports, dead functions, redundant deps
+- **Right:** Clobber's output after one pass
+- **Bottom:** Metrics ticker (e.g., "−47 lines | −3 deps | 0 tests broken")
+
+**Best for:** Quick social media share, README hero GIF
+
+**Example script:**
+```bash
+# Record terminal with asciinema
+python baseline_runner.py --dataset data/demo_prompts.jsonl --baselines heuristic --limit 1
+# Convert to GIF with agg
+```
+
+---
+
+### Option B: Live Agent Demo (30-second screencast)
+
+**Format:** Real-time terminal recording of agent at work:
+1. Show the prompt: "Remove unused code from `app.py`"
+2. Stream agent actions: `ripgrep` → `ruff check` → `sad` edits → `pytest-testmon`
+3. Show final verifier score: `0.82` with breakdown
+4. Display git diff: all deletions, no additions
+
+**Best for:** Technical audiences, conference talks, deep demos
+
+**Tools:**
+- `asciinema` for recording
+- `agg` or `svg-term` for rendering
+
+---
+
+### Option C: Leaderboard (static comparison table)
+
+**Format:** Markdown table or interactive dashboard showing:
+
+| Agent | Gate Pass | Δ Unused | Δ Deps | Deletion Ratio | Avg Score |
+|-------|-----------|----------|--------|----------------|-----------|
+| **GRPO-7B (ours)** | 94% | −18.2 | −2.1 | 0.73 | **0.78** |
+| Qwen3-Coder-30B | 89% | −12.4 | −1.3 | 0.51 | 0.64 |
+| GPT-4o | 91% | −14.8 | −1.8 | 0.62 | 0.71 |
+| Heuristic (ruff) | 97% | −8.1 | −0.2 | 0.38 | 0.52 |
+
+**Best for:** README badges, research papers, landing pages
+
+**Quick start:**
+```bash
+# Run all baselines on test set
+python baseline_runner.py --dataset data/grpo_prompts.jsonl --baselines heuristic gpt4 --print-summaries
+```
+
+---
+
+### Option D: Training Curves (animated plot)
+
+**Format:** Matplotlib/WandB animated plot showing:
+- **X-axis:** Training steps
+- **Y-axis:** Reward, gate pass rate, deletion ratio
+- **Curves:** Reference model (flat) vs GRPO (improving)
+- **Annotations:** Key milestones ("Learned to check tests", "Pruned first dep")
+
+**Best for:** Research storytelling, blog posts, convincing skeptics
+
+**Tools:**
+- WandB for live logging during training
+- `matplotlib.animation` for final render
+
+---
+
+### 🏆 Recommended Combo: **B + C**
+
+1. **Leaderboard first** - Establish baseline numbers with heuristic/GPT-4 (runs fast, no GPU)
+2. **Training curves** - Show GRPO improving over baseline during training
+3. **Live demo** - Screencast the trained model outperforming baselines on novel task
+
+This tells a complete story: *"Here's the problem (baselines struggle), here's our solution (GRPO learns better), here's proof (live demo)".*
+
+---
+
 ## 📚 Key References
 
 This project builds on:
