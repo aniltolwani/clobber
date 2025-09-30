@@ -51,33 +51,33 @@ Clobber trains coding agents to remove unused code, dependencies, and complexity
 
 ```mermaid
 graph LR
-    subgraph Data["📦 Data Pipeline"]
-        A[GitHub PRs] --> B[Filter<br/>deletions > adds]
-        B --> C[Training<br/>Prompts]
+    subgraph Data["Data Pipeline"]
+        A[GitHub PRs] --> B[Filter]
+        B --> C[Training Prompts]
     end
 
-    subgraph Training["🔄 Training Loop"]
-        D[GRPO<br/>Trainer] --> E[Generate<br/>K=6 diffs]
+    subgraph Training["Training Loop"]
+        D[GRPO Trainer] --> E[Generate K=6 Diffs]
         E --> F[Verifier]
-        F --> G{Gates<br/>Pass?}
-        G -->|Yes| H[Score<br/>Metrics]
-        G -->|No| I[R = -1.0]
-        H --> J[Reward]
+        F --> G{Pass Gates?}
+        G -->|Yes| H[Score Metrics]
+        G -->|No| I[Reward = -1]
+        H --> J[Reward Signal]
         I --> J
-        J -->|Update| D
+        J -->|Update Policy| D
     end
 
-    subgraph Eval["📊 Evaluation"]
-        K[Baselines<br/>GPT-4, etc.] --> F
+    subgraph Eval["Evaluation"]
+        K[Baselines] --> F
         F --> L[Leaderboard]
     end
 
     C --> D
     C --> K
 
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style D fill:#bbf,stroke:#333,stroke-width:2px
-    style L fill:#bfb,stroke:#333,stroke-width:2px
+    style F fill:#ffccff,stroke:#333,stroke-width:3px
+    style D fill:#ccddff,stroke:#333,stroke-width:3px
+    style L fill:#ccffcc,stroke:#333,stroke-width:3px
 ```
 
 ### Core Components
