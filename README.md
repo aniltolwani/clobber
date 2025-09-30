@@ -155,20 +155,6 @@ python baseline_runner.py \
   --print-summaries
 ```
 
-**Record a demo (optional)**
-```bash
-# Install recording tools
-npm install -g ttystudio agg-cli
-
-# Record terminal session (~15 seconds, no network required)
-ttystudio --stdout demo.cast --force --cursor green --cmd "bash scripts/demo.sh"
-
-# Convert to GIF
-agg demo.cast docs/demo.gif --theme asciinema --speed 1.5
-```
-
-Demo shows: task → baseline failures → GRPO success with verifier breakdown
-
 **4. Train with GRPO**
 ```bash
 # Local (if you have CUDA)
