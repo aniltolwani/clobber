@@ -214,3 +214,4 @@ data/*
 !data/raw_prs.jsonl
 !data/filtered_prs.jsonl
 !data/grpo_prompts.jsonl
+!data/sample/
