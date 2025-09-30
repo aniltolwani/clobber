@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Clobber-specific
+repos/          # Local clones for training data generation
+checkpoints/    # Model checkpoints from training
+data/*.jsonl    # Keep raw/filtered/prompt datasets (but commit grpo_prompts.jsonl)

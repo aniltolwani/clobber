@@ -7,7 +7,7 @@
 **Teaching LLMs to safely remove dead code, unused dependencies, and complexity—without breaking tests.**
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aniltolwani/clobber/blob/main/LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 [Overview](#-overview) •
@@ -23,7 +23,7 @@
 
 ## 🎯 Overview
 
-**Clobber** is a research harness for training and evaluating **deletion-focused coding agents**. Most code is legacy cruft. Instead of teaching models to *add* features, we train them to:
+**Clobber** is a TRL/GRPO-driven research harness for training and evaluating **deletion-focused coding agents**. Most code is legacy cruft. Instead of teaching models to *add* features, we train them to:
 
 - 🧹 **Remove unused imports, variables, and functions** (Ruff F401/F841)
 - 📦 **Prune dead dependencies** (deptry)
@@ -433,8 +433,8 @@ Built with ☕ and 🗑️ by researchers who believe **less code = better code*
 
 **Star ⭐ this repo if you believe in the power of deletion!**
 
-[Report Bug](https://github.com/yourusername/clobber/issues) •
-[Request Feature](https://github.com/yourusername/clobber/issues) •
-[Discuss](https://github.com/yourusername/clobber/discussions)
+[Report Bug](https://github.com/aniltolwani/clobber/issues) •
+[Request Feature](https://github.com/aniltolwani/clobber/issues) •
+[Discuss](https://github.com/aniltolwani/clobber/discussions)
 
 </div>

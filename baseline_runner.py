@@ -176,9 +176,19 @@ class OpenAIGPT4Baseline(BaselineAgent):
         self.temperature = temperature
         self.max_output_tokens = max_output_tokens
         # Client pulls API credentials from environment variables (OPENAI_API_KEY).
-        self._client = OpenAI()
+        try:
+            self._client = OpenAI()
+        except Exception:
+            self._client = None
 
     def run(self, task: Task) -> BaselineOutput:
+        if self._client is None:
+            return BaselineOutput(
+                diff=None,
+                skip_reason="openai-not-configured",
+                metadata={"error": "OPENAI_API_KEY not set"},
+            )
+
         messages = [
             {
                 "role": "system",
@@ -190,22 +200,29 @@ class OpenAIGPT4Baseline(BaselineAgent):
             {"role": "user", "content": task.prompt},
         ]
 
-        response = self._client.responses.create(
-            model=self.model,
-            input=messages,
-            temperature=self.temperature,
-            max_output_tokens=self.max_output_tokens,
-        )
+        try:
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_output_tokens,
+            )
 
-        diff_text = getattr(response, "output_text", "") or ""
-        if not diff_text.strip():
-            return BaselineOutput(diff=None, skip_reason="empty-response")
+            diff_text = response.choices[0].message.content or ""
+            if not diff_text.strip():
+                return BaselineOutput(diff=None, skip_reason="empty-response")
 
-        metadata = {
-            "model": self.model,
-            "usage": getattr(response, "usage", {}),
-        }
-        return BaselineOutput(diff=diff_text, metadata=metadata)
+            metadata = {
+                "model": self.model,
+                "usage": response.usage.model_dump() if response.usage else {},
+            }
+            return BaselineOutput(diff=diff_text, metadata=metadata)
+        except Exception as exc:
+            return BaselineOutput(
+                diff=None,
+                skip_reason="api-error",
+                metadata={"error": str(exc)},
+            )
 
 
 # ---------------------------------------------------------------------------
