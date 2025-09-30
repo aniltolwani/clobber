@@ -50,34 +50,34 @@ Clobber trains coding agents to remove unused code, dependencies, and complexity
 ## Architecture
 
 ```mermaid
-graph TB
-    subgraph "Data Pipeline"
-        A[GitHub API] -->|fetch-prs| B[Raw PRs]
-        B -->|filter-prs| C[Filtered PRs<br/>deletion > additions]
-        C -->|build-prompts| D[Training Dataset<br/>JSONL]
+graph LR
+    subgraph Data["📦 Data Pipeline"]
+        A[GitHub PRs] --> B[Filter<br/>deletions > adds]
+        B --> C[Training<br/>Prompts]
     end
 
-    subgraph "Training Loop"
-        D --> E[GRPO Trainer]
-        E -->|generates 6<br/>completions| F[Completions]
-        F --> G[Verifier]
-        G -->|gates: apply/compile/test/types| H{Pass?}
-        H -->|fail| I[Reward = -1.0]
-        H -->|pass| J[Score Metrics<br/>Δ unused, Δ deps, deletion ratio]
-        I --> K[Reward Signal]
-        J --> K
-        K -->|update policy| E
+    subgraph Training["🔄 Training Loop"]
+        D[GRPO<br/>Trainer] --> E[Generate<br/>K=6 diffs]
+        E --> F[Verifier]
+        F --> G{Gates<br/>Pass?}
+        G -->|Yes| H[Score<br/>Metrics]
+        G -->|No| I[R = -1.0]
+        H --> J[Reward]
+        I --> J
+        J -->|Update| D
     end
 
-    subgraph "Evaluation"
-        D --> L[Baseline Runner<br/>GPT-4, Heuristic, etc.]
-        L --> G
-        G --> M[Leaderboard<br/>Compare all agents]
+    subgraph Eval["📊 Evaluation"]
+        K[Baselines<br/>GPT-4, etc.] --> F
+        F --> L[Leaderboard]
     end
 
-    style G fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#bbf,stroke:#333,stroke-width:2px
-    style M fill:#bfb,stroke:#333,stroke-width:2px
+    C --> D
+    C --> K
+
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style L fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ### Core Components
