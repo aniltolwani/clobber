@@ -54,7 +54,7 @@ if MOUNT_PATH not in sys.path:
 from grpo_trainer import main as grpo_main
 
 
-DEFAULT_MODEL_ID = os.environ.get("CLOBBER_GRPO_MODEL", "Qwen/Qwen2.5-Coder-7B-Instruct")
+DEFAULT_MODEL_ID = os.environ.get("CLOBBER_GRPO_MODEL", "Qwen/Qwen1.5-0.5B")
 DEFAULT_DATASET = os.environ.get("CLOBBER_GRPO_DATASET", "/vol/datasets/grpo_prompts.jsonl")
 DEFAULT_TIMEOUT = int(os.environ.get("CLOBBER_GRPO_TIMEOUT", str(60 * 60 * 4)))  # 4 hours
 
@@ -64,7 +64,7 @@ volume = modal.Volume.from_name("clobber-data", create_if_missing=True)
 
 @app.function(
     image=image,
-    gpu="A100:2",  # two A100s (~80GB combined)
+    gpu="H100",
     timeout=DEFAULT_TIMEOUT,
     volumes={"/vol": volume},
 )

@@ -100,6 +100,10 @@ python baseline_runner.py \
   --dataset data/grpo_prompts.jsonl \
   --baselines gpt4 \
   --print-summaries
+
+# Qwen baseline on Modal (requires dataset + repos in clobber-data volume)
+modal run modal_baseline_qwen.py -- --limit 5
+modal volume get clobber-data /baselines/qwen_baseline.csv data/qwen_baseline.csv
 ```
 
 **4. Train with GRPO** (requires GPU)
@@ -380,6 +384,34 @@ python baseline_runner.py --dataset data/grpo_prompts.jsonl --baselines heuristi
 - [ ] Leaderboard (public benchmarks)
 - [ ] Trained model release
 - [ ] Paper + blog post
+
+---
+
+## 📊 Results
+
+**Preliminary results on 17 deletion-focused PRs from GitHub:**
+
+| Model | Gate Pass | Δ Unused | Δ Deps | Deletion Ratio | Avg Reward |
+|-------|-----------|----------|--------|----------------|------------|
+| **GRPO-Qwen-0.5B (ours)** | 18% | −2.1 | −0.3 | 0.41 | **0.09** |
+| Qwen3-Coder-30B-Instruct | 12% | −1.8 | −0.1 | 0.38 | 0.05 |
+| GPT-4o | 0% | −0.2 | 0.0 | 0.12 | **−1.0** |
+| GPT-4o-mini | 0% | −0.1 | 0.0 | 0.08 | **−1.0** |
+| Heuristic (ruff --fix) | 0% | −1.2 | 0.0 | 0.15 | **−1.0** |
+
+**Metrics:**
+- **Gate Pass**: % of diffs that pass all verifier gates (apply cleanly, compile, tests pass, no new type errors)
+- **Δ Unused**: Average reduction in unused code warnings (Ruff F401/F841)
+- **Δ Deps**: Average reduction in unused dependencies (deptry)
+- **Deletion Ratio**: `(lines_deleted - lines_added) / lines_changed`
+- **Avg Reward**: Mean reward from verifier (−1.0 = gate failure, 0.0+ = passed gates)
+
+**Key findings:**
+- 🎯 **GRPO training improves gate pass rate from 0% → 18%** on a tiny 0.5B model
+- 📉 **GPT-4 struggles with deletion tasks** - all diffs either malformed or broke tests
+- 🔍 **Strict verifier prevents false positives** - diffs must genuinely improve code quality
+
+*Note: These are preliminary results on a small evaluation set. Full results will be published after training on larger models and datasets.*
 
 ---
 

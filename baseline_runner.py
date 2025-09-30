@@ -19,8 +19,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
+from dotenv import load_dotenv
 from openai import OpenAI
 from verifier import score_patch
+
+load_dotenv()
 
 
 # ---------------------------------------------------------------------------
@@ -318,11 +321,12 @@ def evaluate(
             continue
 
         diff = output.diff or ""
+        diff_clean = sanitize_diff(diff)
         if dry_run:
             yield BaselineRun(
                 baseline=agent.name,
                 task_id=task.identifier,
-                diff=diff,
+                diff=diff_clean,
                 reward=None,
                 diagnostics=diagnostics,
                 elapsed_seconds=elapsed,
@@ -330,16 +334,20 @@ def evaluate(
             )
             continue
 
+        if diff_clean != diff:
+            diagnostics.setdefault("baseline_metadata", {})["sanitized"] = True
+        diagnostics["raw_diff_preview"] = (diff[:200] + "...") if len(diff) > 200 else diff
+
         reward, diag = score_patch(
             workdir=str(task.repo_path),
-            unified_diff=diff,
+            unified_diff=diff_clean,
             allow_refactor=task.allow_refactor,
         )
         diagnostics.update(diag)
         yield BaselineRun(
             baseline=agent.name,
             task_id=task.identifier,
-            diff=diff,
+            diff=diff_clean,
             reward=reward,
             diagnostics=diagnostics,
             elapsed_seconds=elapsed,
@@ -394,6 +402,7 @@ def write_csv(path: Path, rows: Iterable[BaselineRun]) -> None:
         "error",
         "reward",
         "elapsed_seconds",
+        "diff",
         "diagnostics",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -469,3 +478,17 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
 
 if __name__ == "__main__":
     main()
+def sanitize_diff(diff: Optional[str]) -> str:
+    if not diff:
+        return ""
+    text = diff.strip()
+    if text.startswith("```diff"):
+        text = text[len("```diff"):].lstrip()
+    if text.startswith("```patch"):
+        text = text[len("```patch"):].lstrip()
+    if text.startswith("```"):
+        text = text[len("```"):].lstrip()
+    if text.endswith("```"):
+        text = text[: -len("```")].rstrip()
+    lines = [line for line in text.splitlines() if line.strip() != "```"]
+    return "\n".join(lines).strip()

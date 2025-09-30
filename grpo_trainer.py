@@ -11,8 +11,8 @@ from trl import GRPOConfig, GRPOTrainer
 
 from verifier import score_patch
 
-MODEL_ID_SMALL = "Qwen/Qwen2.5-Coder-7B-Instruct"
-MODEL_ID_TARGET = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+MODEL_ID_SMALL = "Qwen/Qwen1.5-0.5B"
+MODEL_ID_TARGET = "Qwen/Qwen2.5-Coder-7B-Instruct"
 DATA_PATH = Path("data/grpo_prompts.jsonl")
 
 
