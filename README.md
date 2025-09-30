@@ -84,6 +84,11 @@ python data_pipeline.py build-prompts \
   --input data/filtered_prs.jsonl \
   --repo-root repos \
   --output data/grpo_prompts.jsonl
+
+# Or inspect bundled samples under data/sample/
+cat data/sample/raw_prs_sample.jsonl
+cat data/sample/filtered_prs_sample.jsonl
+cat data/sample/grpo_prompts_sample.jsonl
 ```
 
 **3. Benchmark baselines**

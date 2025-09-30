@@ -1,0 +1,2 @@
+{"owner": "griptape-ai", "repo": "griptape-nodes", "number": 2427, "title": "Remove unused imports in http handlers", "deletions": 18, "additions": 10, "changed_files": 2, "deletion_ratio": 0.2857, "statuses_state": "success"}
+{"owner": "Abjad", "repo": "abjad", "number": 1819, "title": "Remove deprecated score decorators", "deletions": 359, "additions": 224, "changed_files": 4, "deletion_ratio": 0.2313, "statuses_state": "success"}
