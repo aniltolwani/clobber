@@ -12,7 +12,8 @@ from trl import GRPOConfig, GRPOTrainer
 from verifier import score_patch
 
 MODEL_ID_SMALL = "Qwen/Qwen1.5-0.5B"
-MODEL_ID_TARGET = "Qwen/Qwen2.5-Coder-7B-Instruct"
+MODEL_ID_MEDIUM = "Qwen/Qwen2.5-Coder-7B-Instruct"
+MODEL_ID_LARGE = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
 DATA_PATH = Path("data/grpo_prompts.jsonl")
 
 
@@ -123,7 +124,11 @@ def main(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="GRPO training harness for claude--")
-    parser.add_argument("--model-id", default=MODEL_ID_SMALL, help="HF model id (default: Qwen2.5 7B)")
+    parser.add_argument(
+        "--model-id",
+        default=MODEL_ID_SMALL,
+        help=f"HF model id (default: {MODEL_ID_SMALL}). Options: {MODEL_ID_SMALL}, {MODEL_ID_MEDIUM}, {MODEL_ID_LARGE}",
+    )
     parser.add_argument(
         "--dataset",
         default=str(DATA_PATH),

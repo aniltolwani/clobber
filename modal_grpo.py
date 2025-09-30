@@ -58,6 +58,11 @@ DEFAULT_MODEL_ID = os.environ.get("CLOBBER_GRPO_MODEL", "Qwen/Qwen1.5-0.5B")
 DEFAULT_DATASET = os.environ.get("CLOBBER_GRPO_DATASET", "/vol/datasets/grpo_prompts.jsonl")
 DEFAULT_TIMEOUT = int(os.environ.get("CLOBBER_GRPO_TIMEOUT", str(60 * 60 * 4)))  # 4 hours
 
+# Supported models (set via CLOBBER_GRPO_MODEL):
+# - Qwen/Qwen1.5-0.5B (fast iteration, fits on A10G)
+# - Qwen/Qwen2.5-Coder-7B-Instruct (production, needs A100)
+# - Qwen/Qwen3-Coder-30B-A3B-Instruct (SOTA, needs H100 or multi-GPU)
+
 # Create or reference the shared volume
 volume = modal.Volume.from_name("clobber-data", create_if_missing=True)
 
