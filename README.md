@@ -137,6 +137,13 @@ python data_pipeline.py build-prompts \
   --output data/grpo_prompts.jsonl
 ```
 
+**Peek at bundled samples**
+```bash
+cat data/sample/raw_prs_sample.jsonl
+cat data/sample/filtered_prs_sample.jsonl
+cat data/sample/grpo_prompts_sample.jsonl
+```
+
 **3. Benchmark baselines**
 ```bash
 # Heuristic (ruff --fix)
@@ -151,6 +158,20 @@ python baseline_runner.py \
   --baselines gpt4 \
   --print-summaries
 ```
+
+**30-second demo (optional)**
+```bash
+npm install -g ttystudio agg-cli
+ttystudio --stdout demo.cast --force --cursor green --cmd "bash scripts/demo.sh"
+agg demo.cast docs/demo.gif --theme asciinema --speed 1.2
+```
+`scripts/demo.sh` runs:
+1. `wc -l data/sample/grpo_prompts_demo.jsonl`
+2. `python baseline_runner.py --dataset data/sample/grpo_prompts_demo.jsonl --baselines heuristic --print-summaries`
+3. (optional) `python baseline_runner.py --dataset data/sample/grpo_prompts_demo.jsonl --baselines gpt4 --print-summaries`
+4. `python -c "from verifier import score_patch ..."` using `data/sample/demo_patch.diff`
+
+Drop `docs/demo.gif` near the top of the README when sharing.
 
 **4. Train with GRPO**
 ```bash
