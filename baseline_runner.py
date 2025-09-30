@@ -86,13 +86,41 @@ class BaselineAgent:
 
 
 def run_command(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    import os
+    import shutil
+    import sys
+
+    # Resolve command to full path if it's a binary
+    resolved_cmd = list(cmd)
+    if resolved_cmd:
+        # First try shutil.which with current PATH
+        which_path = shutil.which(resolved_cmd[0])
+
+        # If not found and we're in a venv, check venv bin directory
+        if not which_path and hasattr(sys, 'prefix'):
+            venv_bin = Path(sys.prefix) / "bin" / resolved_cmd[0]
+            if venv_bin.exists():
+                which_path = str(venv_bin)
+
+        if which_path:
+            resolved_cmd[0] = which_path
+        elif resolved_cmd[0] not in ("git",):  # git should always be available
+            # Command not found - return a failed process instead of raising
+            return subprocess.CompletedProcess(
+                args=cmd,
+                returncode=127,
+                stdout="",
+                stderr=f"command not found: {resolved_cmd[0]}",
+            )
+
     return subprocess.run(
-        cmd,
+        resolved_cmd,
         cwd=str(cwd),
         check=False,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=os.environ.copy(),
     )
 
 
@@ -103,7 +131,7 @@ class HeuristicToolsBaseline(BaselineAgent):
         self.name = "heuristic_tools"
         if steps is None:
             steps = [
-                ["ruff", "check", "--fix", "--exit-zero-even-if-changed", "."],
+                ["ruff", "check", "--fix", "--exit-zero", "."],
                 ["ruff", "format", "."],
             ]
         self.steps = steps
@@ -476,8 +504,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     print(f"wrote {len(all_rows)} rows to {output_path}")
 
 
-if __name__ == "__main__":
-    main()
 def sanitize_diff(diff: Optional[str]) -> str:
     if not diff:
         return ""
@@ -492,3 +518,7 @@ def sanitize_diff(diff: Optional[str]) -> str:
         text = text[: -len("```")].rstrip()
     lines = [line for line in text.splitlines() if line.strip() != "```"]
     return "\n".join(lines).strip()
+
+
+if __name__ == "__main__":
+    main()
