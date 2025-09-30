@@ -64,9 +64,9 @@ flowchart TB
     H --> F
     F --> I[Leaderboard]
 
-    style F fill:#ffccff
-    style D fill:#ccddff
-    style I fill:#ccffcc
+    style F fill:#ffe6ff,stroke:#333,stroke-width:2px
+    style D fill:#cce6ff,stroke:#333,stroke-width:2px
+    style I fill:#e6ffe6,stroke:#333,stroke-width:2px
 ```
 
 ### Core Components
