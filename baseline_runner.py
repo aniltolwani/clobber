@@ -19,12 +19,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
+from openai import OpenAI
 from verifier import score_patch
-
-try:
-    from openai import OpenAI
-except ImportError:  # pragma: no cover - optional dependency
-    OpenAI = None
 
 
 # ---------------------------------------------------------------------------
@@ -179,23 +175,10 @@ class OpenAIGPT4Baseline(BaselineAgent):
         self.model = model
         self.temperature = temperature
         self.max_output_tokens = max_output_tokens
-        self._init_error: Optional[str] = None
-        if OpenAI is None:
-            self._init_error = "openai package not installed"
-            self._client = None
-        else:
-            try:
-                # Client pulls API credentials from environment variables (OPENAI_API_KEY).
-                self._client = OpenAI()
-            except Exception as exc:  # pragma: no cover - credential/HTTP failure
-                self._init_error = str(exc)
-                self._client = None
+        # Client pulls API credentials from environment variables (OPENAI_API_KEY).
+        self._client = OpenAI()
 
     def run(self, task: Task) -> BaselineOutput:
-        if self._client is None:
-            reason = self._init_error or "OpenAI client unavailable"
-            return BaselineOutput(diff=None, skip_reason=reason)
-
         messages = [
             {
                 "role": "system",
@@ -207,19 +190,12 @@ class OpenAIGPT4Baseline(BaselineAgent):
             {"role": "user", "content": task.prompt},
         ]
 
-        try:
-            response = self._client.responses.create(
-                model=self.model,
-                input=messages,
-                temperature=self.temperature,
-                max_output_tokens=self.max_output_tokens,
-            )
-        except Exception as exc:  # pragma: no cover - API failure
-            return BaselineOutput(
-                diff=None,
-                skip_reason="api-error",
-                metadata={"error": str(exc)},
-            )
+        response = self._client.responses.create(
+            model=self.model,
+            input=messages,
+            temperature=self.temperature,
+            max_output_tokens=self.max_output_tokens,
+        )
 
         diff_text = getattr(response, "output_text", "") or ""
         if not diff_text.strip():

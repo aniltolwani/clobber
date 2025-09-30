@@ -15,15 +15,11 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
 import requests
 
-try:
-    from dotenv import load_dotenv
-except ImportError:  # pragma: no cover - optional dependency
-    load_dotenv = None
+from dotenv import load_dotenv
 
 API_VERSION = "2022-11-28"
 
-if load_dotenv is not None:
-    load_dotenv()
+load_dotenv()
 DEFAULT_OUTPUT_DIR = Path("data")
 DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
