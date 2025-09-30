@@ -21,6 +21,11 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
 from verifier import score_patch
 
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional dependency
+    OpenAI = None
+
 
 # ---------------------------------------------------------------------------
 # Utility data structures
@@ -157,6 +162,77 @@ class HeuristicToolsBaseline(BaselineAgent):
 
 
 # ---------------------------------------------------------------------------
+# GPT-4 (OpenAI) baseline
+# ---------------------------------------------------------------------------
+
+
+class OpenAIGPT4Baseline(BaselineAgent):
+    """Calls OpenAI GPT-4 family models to produce unified diffs."""
+
+    def __init__(
+        self,
+        model: str = "gpt-4o-mini",
+        temperature: float = 0.0,
+        max_output_tokens: int = 1200,
+    ) -> None:
+        self.name = "gpt4"
+        self.model = model
+        self.temperature = temperature
+        self.max_output_tokens = max_output_tokens
+        self._init_error: Optional[str] = None
+        if OpenAI is None:
+            self._init_error = "openai package not installed"
+            self._client = None
+        else:
+            try:
+                # Client pulls API credentials from environment variables (OPENAI_API_KEY).
+                self._client = OpenAI()
+            except Exception as exc:  # pragma: no cover - credential/HTTP failure
+                self._init_error = str(exc)
+                self._client = None
+
+    def run(self, task: Task) -> BaselineOutput:
+        if self._client is None:
+            reason = self._init_error or "OpenAI client unavailable"
+            return BaselineOutput(diff=None, skip_reason=reason)
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an automated code maintenance agent. Respond with ONLY a unified diff (diff --git ...). "
+                    "Avoid explanations, shell commands, or markdown fences."
+                ),
+            },
+            {"role": "user", "content": task.prompt},
+        ]
+
+        try:
+            response = self._client.responses.create(
+                model=self.model,
+                input=messages,
+                temperature=self.temperature,
+                max_output_tokens=self.max_output_tokens,
+            )
+        except Exception as exc:  # pragma: no cover - API failure
+            return BaselineOutput(
+                diff=None,
+                skip_reason="api-error",
+                metadata={"error": str(exc)},
+            )
+
+        diff_text = getattr(response, "output_text", "") or ""
+        if not diff_text.strip():
+            return BaselineOutput(diff=None, skip_reason="empty-response")
+
+        metadata = {
+            "model": self.model,
+            "usage": getattr(response, "usage", {}),
+        }
+        return BaselineOutput(diff=diff_text, metadata=metadata)
+
+
+# ---------------------------------------------------------------------------
 # Placeholder baselines for external agents
 # ---------------------------------------------------------------------------
 
@@ -285,10 +361,8 @@ def evaluate(
 
 BASELINE_REGISTRY: Dict[str, BaselineAgent] = {
     "heuristic": HeuristicToolsBaseline(),
-    "gpt4o": PlaceholderBaseline(
-        "gpt4o",
-        "Configure OpenAI GPT-4o tool-calling and replace PlaceholderBaseline with an implementation that returns unified diffs.",
-    ),
+    "gpt4": OpenAIGPT4Baseline(model=os.environ.get("CLOBBER_GPT4_MODEL", "gpt-4o-mini")),
+    "gpt4o": OpenAIGPT4Baseline(model="gpt-4o"),
     "aider": PlaceholderBaseline(
         "aider",
         "Invoke the aider CLI with tool schema bindings and return its diff output.",
@@ -354,7 +428,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--baselines",
         nargs="+",
         default=["heuristic"],
-        help="Baseline names to evaluate (heuristic, gpt4o, aider, openhands, qwen)",
+        help="Baseline names to evaluate (heuristic, gpt4, gpt4o, aider, openhands, qwen)",
     )
     parser.add_argument("--limit", type=int, help="Limit number of tasks")
     parser.add_argument("--output", default="data/baseline_results.csv")

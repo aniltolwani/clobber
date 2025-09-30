@@ -1,6 +1,7 @@
 """TRL-based GRPO training loop wired into the verifier."""
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 from typing import Dict, List
 
@@ -62,6 +63,7 @@ def reward_function(batch: List[Dict[str, str]], completions: List[str], **_: Di
 
 
 def main(model_id: str = MODEL_ID_SMALL, dataset_path: Path = DATA_PATH):
+    dataset_path = Path(dataset_path)
     prompts = load_prompts(dataset_path)
     model, tokenizer = load_model(model_id)
     config = build_config()
@@ -81,5 +83,17 @@ def main(model_id: str = MODEL_ID_SMALL, dataset_path: Path = DATA_PATH):
     tokenizer.save_pretrained(output_dir)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="GRPO training harness for claude--")
+    parser.add_argument("--model-id", default=MODEL_ID_SMALL, help="HF model id (default: Qwen2.5 7B)")
+    parser.add_argument(
+        "--dataset",
+        default=str(DATA_PATH),
+        help="Path to prompt dataset jsonl (default: data/grpo_prompts.jsonl)",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(model_id=args.model_id, dataset_path=Path(args.dataset))
