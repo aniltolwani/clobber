@@ -19,4 +19,5 @@ dependencies = [
     "torch>=2.8.0",
     "transformers>=4.56.2",
     "trl>=0.23.0",
+    "modal>=1.1.4",
 ]

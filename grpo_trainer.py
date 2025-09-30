@@ -62,7 +62,11 @@ def reward_function(batch: List[Dict[str, str]], completions: List[str], **_: Di
     return rewards
 
 
-def main(model_id: str = MODEL_ID_SMALL, dataset_path: Path = DATA_PATH):
+def main(
+    model_id: str = MODEL_ID_SMALL,
+    dataset_path: Path = DATA_PATH,
+    output_dir: Path | None = None,
+):
     dataset_path = Path(dataset_path)
     prompts = load_prompts(dataset_path)
     model, tokenizer = load_model(model_id)
@@ -77,10 +81,17 @@ def main(model_id: str = MODEL_ID_SMALL, dataset_path: Path = DATA_PATH):
     )
 
     trainer.train()
-    output_dir = Path("checkpoints") / "grpo_model"
+
+    # Use provided output_dir or default to local checkpoints
+    if output_dir is None:
+        output_dir = Path("checkpoints") / "grpo_model"
+    else:
+        output_dir = Path(output_dir)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
+    print(f"Model saved to {output_dir}")
 
 
 def parse_args() -> argparse.Namespace:
