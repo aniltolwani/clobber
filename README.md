@@ -47,6 +47,67 @@ Clobber trains coding agents to remove unused code, dependencies, and complexity
 
 ---
 
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Data Pipeline"
+        A[GitHub API] -->|fetch-prs| B[Raw PRs]
+        B -->|filter-prs| C[Filtered PRs<br/>deletion > additions]
+        C -->|build-prompts| D[Training Dataset<br/>JSONL]
+    end
+
+    subgraph "Training Loop"
+        D --> E[GRPO Trainer]
+        E -->|generates 6<br/>completions| F[Completions]
+        F --> G[Verifier]
+        G -->|gates: apply/compile/test/types| H{Pass?}
+        H -->|fail| I[Reward = -1.0]
+        H -->|pass| J[Score Metrics<br/>Δ unused, Δ deps, deletion ratio]
+        I --> K[Reward Signal]
+        J --> K
+        K -->|update policy| E
+    end
+
+    subgraph "Evaluation"
+        D --> L[Baseline Runner<br/>GPT-4, Heuristic, etc.]
+        L --> G
+        G --> M[Leaderboard<br/>Compare all agents]
+    end
+
+    style G fill:#f9f,stroke:#333,stroke-width:2px
+    style E fill:#bbf,stroke:#333,stroke-width:2px
+    style M fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+### Core Components
+
+| File | Purpose |
+|------|---------|
+| `tool_schema.py` | Unified action interface for all agents |
+| `verifier.py` | Objective reward function with fail-fast gates |
+| `grpo_trainer.py` | TRL GRPO training loop |
+| `data_pipeline.py` | Dataset mining from GitHub PRs |
+| `baseline_runner.py` | Evaluation harness for benchmarking |
+
+---
+
+## Baselines
+
+All baselines use the same verifier for fair comparison.
+
+| Baseline | Description | Tools |
+|----------|-------------|-------|
+| Heuristic | `ruff --fix` + `ruff format` only | Ruff (no LLM) |
+| GPT-4o | OpenAI with tool-calling | Full tool schema |
+| Aider | CLI-based coding agent | Wrapped with tools |
+| OpenHands | CodeAct agentic runtime | Full tool schema |
+| Qwen3-Coder-30B | Open-weights baseline (no tuning) | Full tool schema |
+
+**Tools available:** ripgrep, sad/comby, ruff, pyright, deptry, pydeps, pytest-testmon
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -60,8 +121,9 @@ cd clobber
 uv sync
 source .venv/bin/activate
 
-# Optional: Set GitHub token in .env
+# Optional: Set API keys in .env
 echo 'GITHUB_TOKEN="ghp_..."' > .env
+echo 'OPENAI_API_KEY="sk-..."' >> .env
 ```
 
 ### Run the Pipeline
@@ -94,8 +156,7 @@ python baseline_runner.py \
   --baselines heuristic \
   --print-summaries
 
-# GPT-4 (requires OPENAI_API_KEY)
-export OPENAI_API_KEY="sk-..."
+# GPT-4
 python baseline_runner.py \
   --dataset data/grpo_prompts.jsonl \
   --baselines gpt4 \
@@ -108,51 +169,9 @@ python baseline_runner.py \
 python grpo_trainer.py
 
 # Or via Modal (remote GPU)
-pip install modal
 modal token new
 modal run modal_grpo.py
 ```
-
----
-
-## Architecture
-
-```mermaid
-graph LR
-    A[GitHub PRs] -->|data_pipeline.py| B[Training Prompts]
-    B --> C[GRPO Trainer]
-    B --> D[Baseline Runner]
-    C --> E[Verifier]
-    D --> E
-    E -->|Reward| C
-    E -->|Scores| F[Leaderboard]
-```
-
-### Core Components
-
-| File | Purpose |
-|------|---------|
-| `tool_schema.py` | Unified action interface for all agents |
-| `verifier.py` | Objective reward function with fail-fast gates |
-| `grpo_trainer.py` | TRL GRPO training loop |
-| `data_pipeline.py` | Dataset mining from GitHub PRs |
-| `baseline_runner.py` | Evaluation harness for benchmarking |
-
----
-
-## Baselines
-
-All baselines use the same verifier for fair comparison.
-
-| Baseline | Description | Tools |
-|----------|-------------|-------|
-| Heuristic | `ruff --fix` + `ruff format` only | Ruff (no LLM) |
-| GPT-4o | OpenAI with tool-calling | Full tool schema |
-| Aider | CLI-based coding agent | Wrapped with tools |
-| OpenHands | CodeAct agentic runtime | Full tool schema |
-| Qwen3-Coder-30B | Open-weights baseline (no tuning) | Full tool schema |
-
-**Tools available:** ripgrep, sad/comby, ruff, pyright, deptry, pydeps, pytest-testmon
 
 ---
 
@@ -201,24 +220,9 @@ clobber/
 
 ## TODO
 
-- [ ] End-to-end training run (7B model)
+- [x] End-to-end training run (7B model)
 - [ ] Add Aider + OpenHands baselines
 - [ ] SWE-bench Verified/Lite integration
 - [ ] Training dashboard (WandB/TensorBoard)
 - [ ] Full ablation studies
 - [ ] Trained model release
-
----
-
-## References
-
-- [Ruff](https://docs.astral.sh/ruff/) - Fast Python linter
-- [TRL (HuggingFace)](https://huggingface.co/docs/trl/) - GRPO implementation
-- [SWE-bench](https://www.swebench.com/) - Real-world coding tasks
-- [Qwen3-Coder](https://qwenlm.github.io/blog/qwen3-coder/) - Agentic coding baseline
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
