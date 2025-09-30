@@ -41,12 +41,6 @@
 
 ---
 
-## Overview
-
-Clobber trains coding agents to remove unused code, dependencies, and complexity while keeping tests passing. All improvements are measured by objective, tool-verified metrics.
-
----
-
 ## Architecture
 
 ```mermaid
